@@ -1,0 +1,26 @@
+import sbt._
+import Keys._
+import play.Project._
+
+object ApplicationBuild extends Build {
+
+  val appName         = "zhtool"
+  val appVersion      = "0.1-SNAPSHOT"
+
+  val appDependencies = Seq(
+    "org.apache.activemq" % "activemq-core" % "5.7.0",
+    "org.springframework" % "spring-jms" % "3.0.5.RELEASE",
+    "javax.mail" % "mail" % "1.4.7",
+    "com.github.nscala-time" %% "nscala-time" % "1.2.0",
+    "commons-lang" % "commons-lang" % "2.6",
+    "redis.clients" % "jedis" % "2.2.1",
+    "com.ning" % "async-http-client" % "1.8.12",
+    jdbc
+  )
+
+  val main = play.Project(appName, appVersion, appDependencies).settings(
+    // Add app folder as resource directory so that widget files are in the classpath
+    doc in Compile <<= target.map(_ / "none") // don't generate API docs in dist
+  )
+
+}
