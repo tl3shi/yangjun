@@ -113,6 +113,34 @@ object Application extends Controller with Logging {
       }
   }
 
+  import java.io.BufferedReader;
+  import java.io.InputStreamReader;
+
+  def exeCmd(commandStr: String): String = {
+      var br: BufferedReader = null;
+      try {
+        val p: Process = Runtime.getRuntime().exec(commandStr);
+        br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        var line: String = null;
+        val sb: StringBuilder = new StringBuilder();
+        while ( line != null) {
+          line = br.readLine()
+          sb.append(line + "\n");
+        }
+        sb.toString()
+      } catch  {
+        case e: Throwable => logger.error("Error", e);
+      } finally {
+        if (br != null) {
+          try {
+            br.close();
+          } catch  {
+            case e: Throwable => logger.error(" br.close()",e);
+          }
+        }
+      }
+  }
+
 
   def transform() = Action { implicit request =>
     actionForm.bindFromRequest.fold({
