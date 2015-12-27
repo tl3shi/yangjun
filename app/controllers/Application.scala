@@ -116,7 +116,7 @@ object Application extends Controller with Logging {
   import java.io.BufferedReader;
   import java.io.InputStreamReader;
 
-  def exeCmd(commandStr: String): String = {
+  def exeCmd(commandStr: String) = {
       var br: BufferedReader = null;
       try {
         val p: Process = Runtime.getRuntime().exec(commandStr);
@@ -154,8 +154,23 @@ object Application extends Controller with Logging {
         val results = params.split(",").flatMap(action => {
           action match {
             case "PFX2PEM" => {
-              // TODO
-              Some(new File("PFX2PEM.pem"))
+              try {
+                val cmd = s"cmd.exe C:\\OpenSSL-Win64\\PFX2PEM.bat ${pfx} ${chain}"
+                exeCmd(cmd)
+                val resultFileName = new File(pfx).getName + ".pem"
+                val resultFile = new File(resultFileName)
+                if (resultFile.exists()) {
+                  logger.info(s"file convert success:${resultFile.getAbsoluteFile}")
+                  Some(resultFile)
+                } else {
+                  logger.warn(s"file concert failed.")
+                  None
+                }
+              } catch {
+                case e: Throwable => {
+                  None
+                }
+              }
             }
             case "PFX2KDB" => {
               // TODO4
