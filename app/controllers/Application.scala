@@ -2,6 +2,7 @@ package controllers
 
 import java.io.File
 import java.io.File
+import java.util.zip.{ZipEntry, ZipOutputStream}
 import com.google.common.io.Files
 import com.typesafe.scalalogging.slf4j.Logging
 import org.joda.time.DateTime
@@ -11,6 +12,13 @@ import play.api.libs.Files
 import play.api.libs.json._
 import play.api.mvc._
 import play.utils.UriEncoding
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import scala.collection.immutable.Set
 
@@ -45,9 +53,66 @@ object Application extends Controller with Logging {
       if (file2.exists())
         Ok.sendFile(file2)
       else
-        JsonResult("wrong", "wrong")
+        JsonResult("wrong", s"$fileNameIn 不存在")
     }
   }
+
+
+
+
+   def createZip(sourceFiles: List[File], zipPath: String) {
+      var fos: FileOutputStream = null;
+      var zos: ZipOutputStream = null;
+      try {
+        fos = new FileOutputStream(zipPath);
+        zos = new ZipOutputStream(fos);
+        sourceFiles.foreach(sourcePath => {
+          writeZip(sourcePath, "", zos);
+        })
+      } catch  {
+        case e: Throwable => logger.error("创建ZIP文件失败",e);
+      } finally {
+        try {
+          if (zos != null) {
+            zos.close();
+          }
+        } catch {
+          case e: Throwable => logger.error("创建ZIP文件失败",e);
+        }
+
+      }
+    }
+
+    private def writeZip(file: File, parentPath: String, zos: ZipOutputStream) {
+      if(file.exists()){
+        var fis: FileInputStream = null;
+        var  dis: DataInputStream = null;
+        try {
+          fis = new FileInputStream(file);
+          dis = new DataInputStream(new BufferedInputStream(fis));
+          val ze: ZipEntry = new ZipEntry(parentPath + file.getName());
+          zos.putNextEntry(ze);
+          val content = new Array[Byte](1024)
+          var len: Int = 0;
+          while(len != -1) {
+            len = fis.read(content)
+            zos.write(content, 0, len);
+            zos.flush();
+          }
+        } catch {
+          case e: Throwable => logger.error("创建ZIP文件失败",e);
+        } finally {
+          try {
+            if(dis != null){
+              dis.close();
+            }
+          } catch {
+            case e: Throwable => logger.error("创建ZIP文件失败",e);
+          }
+        }
+      }
+  }
+
 
   def transform() = Action { implicit request =>
     actionForm.bindFromRequest.fold({
@@ -65,7 +130,7 @@ object Application extends Controller with Logging {
               Some(new File("PFX2PEM.result"))
             }
             case "PFX2KDB" => {
-              // TODO
+              // TODO4
               None
             }
             case "PFX2JKS" => {
@@ -79,7 +144,8 @@ object Application extends Controller with Logging {
           }
         })
         logger.info(s"transform result: $results")
-        val fileResult = s"${tmp}/result.zip" // 结果文件 TODO
+        val fileResult = s"${tmp}/result.zip" // 结果文件
+        createZip(results.toList, fileResult)
         val data = Json.obj("url" -> fileResult)
         JsonResult("ok", "ok", data)
       }
