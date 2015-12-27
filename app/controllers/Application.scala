@@ -127,7 +127,7 @@ object Application extends Controller with Logging {
           action match {
             case "PFX2PEM" => {
               // TODO
-              Some(new File("PFX2PEM.result"))
+              Some(new File("PFX2PEM.pem"))
             }
             case "PFX2KDB" => {
               // TODO4
@@ -135,7 +135,7 @@ object Application extends Controller with Logging {
             }
             case "PFX2JKS" => {
               // TODO
-              None
+              Some(new File("PFX2JKS.jks"))
             }
             case "PFX2P7B" => {
               // TODO
